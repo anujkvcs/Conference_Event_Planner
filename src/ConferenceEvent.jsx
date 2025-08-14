@@ -3,10 +3,14 @@ import "./ConferenceEvent.css";
 import TotalCost from "./TotalCost";
 import { useSelector, useDispatch } from "react-redux";
 import { incrementQuantity, decrementQuantity } from "./venueSlice";
+import { incrementAvQuantity, decrementAvQuantity } from "./avSlice";
+import { toggleMealSelection, setNumberOfPeople } from "./mealsSlice";
 const ConferenceEvent = () => {
     const [showItems, setShowItems] = useState(false);
-    const [numberOfPeople, setNumberOfPeople] = useState(1);
+    const [activeSection, setActiveSection] = useState('venue');
     const venueItems = useSelector((state) => state.venue);
+    const avItems = useSelector((state) => state.av);
+    const mealsData = useSelector((state) => state.meals);
     const dispatch = useDispatch();
     const remainingAuditoriumQuantity = 3 - venueItems.find(item => item.name === "Auditorium Hall (Capacity:200)").quantity;
 
@@ -29,23 +33,60 @@ const ConferenceEvent = () => {
         }
       };
     const handleIncrementAvQuantity = (index) => {
+        dispatch(incrementAvQuantity(index));
     };
 
     const handleDecrementAvQuantity = (index) => {
+        dispatch(decrementAvQuantity(index));
     };
 
     const handleMealSelection = (index) => {
-       
+        dispatch(toggleMealSelection(index));
+    };
+
+    const handleNumberOfPeopleChange = (value) => {
+        const numValue = Math.max(1, Math.min(1000, parseInt(value) || 1));
+        dispatch(setNumberOfPeople(numValue));
     };
 
     const getItemsFromTotalCost = () => {
         const items = [];
+        
+        venueItems.forEach(item => {
+            if (item.quantity > 0) {
+                items.push({ ...item, type: 'venue' });
+            }
+        });
+        
+        avItems.forEach(item => {
+            if (item.quantity > 0) {
+                items.push({ ...item, type: 'addon' });
+            }
+        });
+        
+        mealsData.selectedMeals.forEach(meal => {
+            if (meal.selected) {
+                items.push({ ...meal, quantity: mealsData.numberOfPeople, type: 'meal' });
+            }
+        });
+        
+        return items;
     };
 
     const items = getItemsFromTotalCost();
 
     const ItemsDisplay = ({ items }) => {
-
+        return (
+            <div className="items-list">
+                {items.map((item, index) => (
+                    <div key={index} className="item-detail">
+                        <span>{item.name}</span>
+                        <span>Qty: {item.quantity}</span>
+                        <span>${item.cost * item.quantity}</span>
+                    </div>
+                ))}
+            </div>
+        );
     };
     const calculateTotalCost = (section) => {
         let totalCost = 0;
@@ -53,18 +94,41 @@ const ConferenceEvent = () => {
           venueItems.forEach((item) => {
             totalCost += item.cost * item.quantity;
           });
+        } else if (section === "av") {
+          avItems.forEach((item) => {
+            totalCost += item.cost * item.quantity;
+          });
+        } else if (section === "meals") {
+          mealsData.selectedMeals.forEach((meal) => {
+            if (meal.selected) {
+              totalCost += meal.cost * mealsData.numberOfPeople;
+            }
+          });
         }
         return totalCost;
       };
+    
     const venueTotalCost = calculateTotalCost("venue");
+    const avTotalCost = calculateTotalCost("av");
+    const mealsTotalCost = calculateTotalCost("meals");
+    const totalCosts = {
+        venue: venueTotalCost,
+        av: avTotalCost,
+        meals: mealsTotalCost,
+        total: venueTotalCost + avTotalCost + mealsTotalCost
+    };
 
     const navigateToProducts = (idType) => {
-        if (idType == '#venue' || idType == '#addons' || idType == '#meals') {
-          if (showItems) { // Check if showItems is false
-            setShowItems(!showItems); // Toggle showItems to true only if it's currently false
-          }
+        const section = idType.replace('#', '');
+        setActiveSection(section);
+        if (showItems) {
+            setShowItems(false);
         }
-      }
+        // Smooth scroll to section
+        setTimeout(() => {
+            document.getElementById(section)?.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+    }
 
     return (
         <>
@@ -72,13 +136,24 @@ const ConferenceEvent = () => {
                 <div className="company_logo">Conference Expense Planner</div>
                 <div className="left_navbar">
                     <div className="nav_links">
-                        <a href="#venue" onClick={() => navigateToProducts("#venue")} >Venue</a>
-                        <a href="#addons" onClick={() => navigateToProducts('#addons')}>Add-ons</a>
-                        <a href="#meals" onClick={() => navigateToProducts('#meals')}>Meals</a>
+                        <a href="#venue" 
+                           className={activeSection === 'venue' ? 'active' : ''}
+                           onClick={() => navigateToProducts("#venue")}>Venue</a>
+                        <a href="#addons" 
+                           className={activeSection === 'addons' ? 'active' : ''}
+                           onClick={() => navigateToProducts('#addons')}>Add-ons</a>
+                        <a href="#meals" 
+                           className={activeSection === 'meals' ? 'active' : ''}
+                           onClick={() => navigateToProducts('#meals')}>Meals</a>
                     </div>
-                    <button className="details_button" onClick={() => setShowItems(!showItems)}>
-                        Show Details
-                    </button>
+                    <div className="summary-info">
+                        <span className="items-count">
+                            {items.length} items selected
+                        </span>
+                        <button className="details_button" onClick={() => setShowItems(!showItems)}>
+                            {showItems ? 'Back to Selection' : 'Show Details'}
+                        </button>
+                    </div>
                 </div>
             </navbar>
             <div className="main_container">
@@ -149,39 +224,80 @@ const ConferenceEvent = () => {
 
                             {/*Necessary Add-ons*/}
                             <div id="addons" className="venue_container container_main">
-
-
                                 <div className="text">
-
-                                    <h1> Add-ons Selection</h1>
-
+                                    <h1>Add-ons Selection</h1>
                                 </div>
-                                <div className="addons_selection">
-
+                                <div className="venue_selection">
+                                    {avItems.map((item, index) => (
+                                        <div className="venue_main" key={index}>
+                                            <div className="img">
+                                                <img 
+                                                    src={item.img} 
+                                                    alt={item.name}
+                                                    onError={(e) => {
+                                                        e.target.src = 'https://via.placeholder.com/300x200?text=Image+Not+Available';
+                                                    }}
+                                                />
+                                            </div>
+                                            <div className="text">{item.name}</div>
+                                            <div>${item.cost}</div>
+                                            <div className="button_container">
+                                                <button
+                                                    className={item.quantity === 0 ? "btn-warning btn-disabled" : "btn-warning btn-minus"}
+                                                    onClick={() => handleDecrementAvQuantity(index)}
+                                                >
+                                                    &#8211;
+                                                </button>
+                                                <span className="selected_count">
+                                                    {item.quantity}
+                                                </span>
+                                                <button
+                                                    className={item.quantity === 10 ? "btn-success btn-disabled" : "btn-success btn-plus"}
+                                                    onClick={() => handleIncrementAvQuantity(index)}
+                                                >
+                                                    &#43;
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
-                                <div className="total_cost">Total Cost:</div>
-
+                                <div className="total_cost">Total Cost: ${avTotalCost}</div>
                             </div>
 
                             {/* Meal Section */}
-
                             <div id="meals" className="venue_container container_main">
-
                                 <div className="text">
-
                                     <h1>Meals Selection</h1>
                                 </div>
-
-                                <div className="input-container venue_selection">
-
+                                <div className="input-container">
+                                    <label htmlFor="numberOfPeople">Number of People:</label>
+                                    <input
+                                        type="number"
+                                        id="numberOfPeople"
+                                        min="1"
+                                        max="1000"
+                                        value={mealsData.numberOfPeople}
+                                        onChange={(e) => handleNumberOfPeopleChange(e.target.value)}
+                                        placeholder="Enter number of people"
+                                    />
                                 </div>
                                 <div className="meal_selection">
-
+                                    {mealsData.selectedMeals.map((meal, index) => (
+                                        <div key={index} className="meal_item">
+                                            <label>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={meal.selected}
+                                                    onChange={() => handleMealSelection(index)}
+                                                />
+                                                {meal.name} - ${meal.cost} per person
+                                            </label>
+                                        </div>
+                                    ))}
                                 </div>
-                                <div className="total_cost">Total Cost: </div>
-
-
+                                <div className="total_cost">Total Cost: ${mealsTotalCost}</div>
                             </div>
+                            <div className="footer-spacer"></div>
                         </div>
                     ) : (
                         <div className="total_amount_detail">
@@ -189,10 +305,6 @@ const ConferenceEvent = () => {
                         </div>
                     )
                 }
-
-
-
-
             </div>
         </>
 

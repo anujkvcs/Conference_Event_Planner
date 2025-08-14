@@ -1,40 +1,90 @@
 .pricing-app {
- margin-top: 20px;
- /* margin-left: 40vw; */
- width: 100vw;
- height: 100vh;
- display: flex;
- align-items: center;
- justify-content: center;
+  margin-top: 100px;
+  width: 100vw;
+  min-height: calc(100vh - 100px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
 }
-
 
 .display_box {
   text-align: center;
   box-sizing: border-box;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   border-radius: 15px;
   background-color: white;
   color: #333;
   margin: 0;
-  padding: 55px;
-  width: 80vw;
+  padding: 40px;
+  max-width: 800px;
+  width: 90%;
 }
 
-
-.pricing-app .preheading {
-  font-family: dosis, sans-serif;
-  text-transform: uppercase;
-  line-height: 1;
-  margin: 0;
-  /* padding: 0 0 10px; */
-  font-size: 25px;
+.display_box h3 {
+  font-size: 32px;
+  margin-bottom: 30px;
+  color: #133b6a;
 }
 
-.pricing-app h2 {
-  font-size: 60px;
+.cost-breakdown {
+  text-align: left;
+  margin: 20px 0;
 }
 
-.right {
-  margin-right: 0;
+.cost-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 0;
+  font-size: 18px;
+  border-bottom: 1px solid #eee;
+}
+
+.cost-item.total {
+  font-weight: bold;
+  font-size: 24px;
+  border-top: 2px solid #133b6a;
+  border-bottom: none;
+  padding-top: 20px;
+  margin-top: 15px;
+  color: #133b6a;
+}
+
+.items-display {
+  margin-top: 30px;
+}
+
+.items-list {
+  text-align: left;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.item-detail {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 16px;
+}
+
+.item-detail:last-child {
+  border-bottom: none;
+}
+
+.back-button {
+  margin-top: 30px;
+  padding: 12px 30px;
+  background-color: #133b6a;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background-color 0.3s ease;
+}
+
+.back-button:hover {
+  background-color: #0f2d4a;
 }

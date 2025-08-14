@@ -105,17 +105,16 @@
 }
 
 .event-list-container {
-  position: absolute;
+  position: fixed;
   overflow-x: hidden;
   top: 100vh;
   left: 0;
   width: 100%;
   height: 100vh;
-  background-color: rgba(255, 255, 255, 0.8);
+  background-color: white;
   transition: top 0.5s ease;
   overflow-y: auto;
-  z-index: 2;
-  backdrop-filter: blur(5px);
+  z-index: 10;
 }
 
 .event-list-container.visible {
